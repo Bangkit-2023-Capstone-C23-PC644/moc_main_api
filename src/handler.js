@@ -94,6 +94,28 @@ const loginHandler = async (req,res) =>{
     res.status(200).json(rows)
 }
 
+const getShortestHandler = async (req,res) => {
+    const {longitude , latitude} = req.body;
+    try {
+        // Get a connection from the pool
+        const connection = await pool.getConnection();
+    
+        // Execute the SQL query asynchronously
+        const query = 'SELECT namaRS, ST_Distance_Sphere(location, POINT(?, ?)) AS distance FROM hospitals ORDER BY distance;'
+        const [rows, fields] = await connection.query(query, [longitude, latitude]);
+    
+        // Release the connection back to the pool
+        connection.release();
+    
+        // Send the query result as a response
+        res.json(rows);
+      } catch (error) {
+        // Handle any errors that occur during the process
+        console.error('Error executing SQL query:', error);
+        res.status(500).send('Internal Server Error');
+      }
+}
+
 const helloHandler = (req,res) => {
     res.status(200).send({
         hello: 'okay'
@@ -101,4 +123,4 @@ const helloHandler = (req,res) => {
 }
 
 
-module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler };
+module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler };
