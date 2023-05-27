@@ -1,4 +1,5 @@
 const { query } = require('express');
+const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
     host: '172.27.213.253',
@@ -50,12 +51,15 @@ const registerHandler = async (req,res) => {
         return;
     }
 
+    const salt = await bcrypt.genSalt();
+    const hash = await bcrypt.hash(password,salt)
+
     const connection = await pool.getConnection();
 
     try{
     // Execute the SQL query asynchronously
     const query = 'INSERT INTO users (nik, name, email, phone, password, lintang, bujur) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    const [result] = await connection.query(query, [nik, name, email, phone, password, lintang, bujur]);
+    const [result] = await connection.query(query, [nik, name, email, phone, hash, lintang, bujur]);
 
     // Release the connection back to the pool
     connection.release();
@@ -85,13 +89,17 @@ const loginHandler = async (req,res) =>{
         return;
     }
     const connection = await pool.getConnection();
-    const query = 'SELECT * FROM users WHERE nik=? AND password=?'
+    const query = 'SELECT password FROM users WHERE nik=?'
     const [rows, fields] = await connection.query(query, [nik, password]);
-    if(rows.length === 0){
-        res.status(400).send("invalid username/password")
-        return
+    connection.release();
+    if(rows.length !== 0){
+        const auth = bcrypt.compareSync(password, rows[0].password)
+        if (auth){
+            return res.status(200).send('login successful')
+        }
+        return res.status(400).send('wrong password')
     }
-    res.status(200).json(rows)
+    res.status(400).json('nik not found')
 }
 
 const getShortestHandler = async (req,res) => {
