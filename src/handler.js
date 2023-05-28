@@ -17,7 +17,29 @@ const getHospitalHandler = async (req, res) => {
         const connection = await pool.getConnection();
     
         // Execute the SQL query asynchronously
-        const [rows, fields] = await connection.query('SELECT namaRS, alamat, rawatInap FROM hospitals');
+        const [rows, fields] = await connection.query('SELECT namaRS FROM hospitals');
+    
+        // Release the connection back to the pool
+        connection.release();
+    
+        // Send the query result as a response
+        res.json(rows);
+      } catch (error) {
+        // Handle any errors that occur during the process
+        console.error('Error executing SQL query:', error);
+        res.status(500).send('Internal Server Error');
+      }
+}
+
+const getHospitalSpecificHandler = async (req,res) => {
+    const {id} = req.params;
+    try {
+        // Get a connection from the pool
+        const connection = await pool.getConnection();
+        
+        const query = "SELECT h.namaRS, h.alamat, h.rawatInap , s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalId = s.hid WHERE h.hospitalId = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalId = ?)";
+        // Execute the SQL query asynchronously
+        const [rows, fields] = await connection.query(query, [id, id]);
     
         // Release the connection back to the pool
         connection.release();
@@ -157,4 +179,4 @@ const helloHandler = (req,res) => {
 }
 
 
-module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler };
+module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler };
