@@ -1,6 +1,7 @@
 const { query } = require('express');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
+const jwt = require('jsonwebtoken');
 const pool = mysql.createPool({
     host: '172.27.213.253',
     user: 'wsl_root',
@@ -8,6 +9,7 @@ const pool = mysql.createPool({
     database: 'mocset',
     connectionLimit: 10, // Adjust the limit as per your requirements
 });
+
 
 const getHospitalHandler = async (req, res) => {
     try {
@@ -95,11 +97,13 @@ const loginHandler = async (req,res) =>{
     if(rows.length !== 0){
         const auth = bcrypt.compareSync(password, rows[0].password)
         if (auth){
-            return res.status(200).send('login successful')
+            const payload = {nik: nik}
+            const token = jwt.sign(payload, 'a');
+            return res.status(200).json({token});
         }
-        return res.status(400).send('wrong password')
+        return res.status(400).json({error: 'wrong password'});
     }
-    res.status(400).json('nik not found')
+    res.status(400).json({error:'nik not found'})
 }
 
 const getShortestHandler = async (req,res) => {
@@ -124,6 +128,28 @@ const getShortestHandler = async (req,res) => {
       }
 }
 
+const getNearestTokenHandler = async(req,res) =>{
+    const nik = req.nik;
+    try {
+        // Get a connection from the pool
+        const connection = await pool.getConnection();
+    
+        // Execute the SQL query asynchronously
+        const query = 'SELECT t1.namaRS, ST_Distance_Sphere(t1.location, POINT(t2.bujur, t2.lintang)) AS distance FROM hospitals t1 JOIN users t2 ON t2.nik = ?;'
+        const [rows, fields] = await connection.query(query, [nik]);
+    
+        // Release the connection back to the pool
+        connection.release();
+    
+        // Send the query result as a response
+        res.json(rows);
+      } catch (error) {
+        // Handle any errors that occur during the process
+        console.error('Error executing SQL query:', error);
+        res.status(500).send('Internal Server Error');
+      }
+}
+
 const helloHandler = (req,res) => {
     res.status(200).send({
         hello: 'okay'
@@ -131,4 +157,4 @@ const helloHandler = (req,res) => {
 }
 
 
-module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler };
+module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler };
