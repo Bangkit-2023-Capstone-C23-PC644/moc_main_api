@@ -37,7 +37,7 @@ const getHospitalSpecificHandler = async (req,res) => {
         // Get a connection from the pool
         const connection = await pool.getConnection();
         
-        const query = "SELECT h.namaRS, h.alamat, h.rawatInap , s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalId = s.hid WHERE h.hospitalId = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalId = ?)";
+        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalId = s.hid WHERE h.hospitalId = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalId = ?)";
         // Execute the SQL query asynchronously
         const [rows, fields] = await connection.query(query, [id, id]);
     
@@ -135,7 +135,7 @@ const getShortestHandler = async (req,res) => {
         const connection = await pool.getConnection();
     
         // Execute the SQL query asynchronously
-        const query = 'SELECT namaRS, ST_Distance_Sphere(location, POINT(?, ?)) AS distance FROM hospitals ORDER BY distance;'
+        const query = 'SELECT hospitalID, namaRS, ST_Distance_Sphere(location, POINT(?, ?)) AS distance FROM hospitals ORDER BY distance;'
         const [rows, fields] = await connection.query(query, [longitude, latitude]);
     
         // Release the connection back to the pool
@@ -157,7 +157,7 @@ const getNearestTokenHandler = async(req,res) =>{
         const connection = await pool.getConnection();
     
         // Execute the SQL query asynchronously
-        const query = 'SELECT t1.namaRS, ST_Distance_Sphere(t1.location, POINT(t2.bujur, t2.lintang)) AS distance FROM hospitals t1 JOIN users t2 ON t2.nik = ?;'
+        const query = 'SELECT t1.hospitalID, t1.namaRS, ST_Distance_Sphere(t1.location, POINT(t2.bujur, t2.lintang)) AS distance FROM hospitals t1 JOIN users t2 ON t2.nik = ? ORDER BY distance;'
         const [rows, fields] = await connection.query(query, [nik]);
     
         // Release the connection back to the pool
