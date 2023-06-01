@@ -17,7 +17,7 @@ const getHospitalHandler = async (req, res) => {
         const connection = await pool.getConnection();
     
         // Execute the SQL query asynchronously
-        const [rows, fields] = await connection.query('SELECT namaRS FROM hospitals');
+        const [rows, fields] = await connection.query('SELECT hospitalID, namaRS FROM hospitals');
     
         // Release the connection back to the pool
         connection.release();
@@ -37,7 +37,7 @@ const getHospitalSpecificHandler = async (req,res) => {
         // Get a connection from the pool
         const connection = await pool.getConnection();
         
-        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalId = s.hid WHERE h.hospitalId = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalId = ?)";
+        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_umum, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalID = s.hid WHERE h.hospitalID = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalID = ?)";
         // Execute the SQL query asynchronously
         const [rows, fields] = await connection.query(query, [id, id]);
     
@@ -60,7 +60,7 @@ const registerHandler = async (req,res) => {
         return;
     }
 
-    if (nik === '' || name === ''|| email === ''|| !phone === '' || !password === ''|| !lintang === '' || !bujur === '') {
+    if (nik === '' || name === ''|| email === ''|| phone === '' || password === ''|| lintang === '' || bujur === '') {
         res.status(400).json({ error: 'Missing required fields' });
         return;
     }
@@ -172,6 +172,66 @@ const getNearestTokenHandler = async(req,res) =>{
       }
 }
 
+const rsRegisterHandler = async (req,res) => {
+    const { hospitalID, namaRS, alamat, lintang, bujur, kemampuan_penyelenggaraan, status_akreditasi, jumlah_tempat_tidur_perawatan_umum, jumlah_tempat_tidur_perawatan_persalinan, jml_dokter_umum, jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, password } = req.body;
+
+    const default_kemampuan_penyelenggaraan = kemampuan_penyelenggaraan || 0;
+    const default_status_akreditasi = status_akreditasi || 0;
+    const default_jumlah_tempat_tidur_perawatan_umum = jumlah_tempat_tidur_perawatan_umum || 0;
+    const default_jumlah_tempat_tidur_perawatan_persalinan = jumlah_tempat_tidur_perawatan_persalinan || 0;
+    const default_jml_dokter_umum = jml_dokter_umum || 0;
+    const default_jml_dokter_gigi = jml_dokter_gigi || 0;
+    const default_jml_perawat = jml_perawat || 0;
+    const default_jml_bidan = jml_bidan || 0;
+    const default_jml_ahli_gizi = jml_ahli_gizi || 0;
+
+    if(!hospitalID || !namaRS || !alamat || !lintang || !bujur) {
+        console.log(`${hospitalID}, ${namaRS}, ${alamat}, ${lintang}, ${bujur}`);
+        res.status(400).json({ error: 'Missing required fields1' });
+        return;
+    }
+    if(hospitalID === ''|| namaRS === '' || alamat === '' || lintang === '' || bujur === '') {
+        res.status(400).json({ error: 'Missing required fields2' });
+        return;
+    }
+
+    if(hospitalID.length < 7 ){
+        res.status(400).json({ error: 'ID invalid' });
+        return;
+    }
+    if(password.length < 6){
+        res.status(400).json({ error: 'password harus lebih dari 6 karakter' });
+        return;
+    }
+    const salt = await bcrypt.genSalt();
+    const hash = await bcrypt.hash(password,salt)
+
+    const connection = await pool.getConnection();
+
+    try{
+    // Execute the SQL query asynchronously
+    const query = `INSERT INTO hospitals (hospitalID, namaRS, alamat, lintang, bujur, kemampuan_penyelenggaraan, status_akreditasi, jumlah_tempat_tidur_perawatan_umum, jumlah_tempat_tidur_perawatan_persalinan, jml_dokter_umum, jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, password, location ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, POINT(${bujur} ,${lintang}))`;
+    const [result] = await connection.query(query, [hospitalID, namaRS, alamat, lintang, bujur, default_kemampuan_penyelenggaraan, default_status_akreditasi, default_jumlah_tempat_tidur_perawatan_umum, default_jumlah_tempat_tidur_perawatan_persalinan, default_jml_dokter_umum, default_jml_dokter_gigi, default_jml_perawat, default_jml_bidan, default_jml_ahli_gizi, hash]);
+
+    // Release the connection back to the pool
+    connection.release();
+
+    // Send the query result as a response
+    res.json({
+      id: result.insertId,
+      message: 'Data inserted successfully',
+    });
+    }
+
+    catch (error) {
+    // Handle any errors that occur during the process
+    console.error('Error inserting data:', error);
+    res.status(400).send('duplicate entry detected');
+  }
+}
+
+
+
 const helloHandler = (req,res) => {
     res.status(200).send({
         hello: 'okay'
@@ -179,4 +239,4 @@ const helloHandler = (req,res) => {
 }
 
 
-module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler };
+module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler, rsRegisterHandler };
