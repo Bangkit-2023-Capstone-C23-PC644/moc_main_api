@@ -113,15 +113,27 @@ const loginHandler = async (req,res) =>{
         return;
     }
     const connection = await pool.getConnection();
-    const query = 'SELECT password FROM users WHERE nik=?'
-    const [rows, fields] = await connection.query(query, [nik, password]);
+    const query = 'SELECT nik, name, email, phone, password, lintang, bujur FROM users WHERE nik=?'
+    const [rows, fields] = await connection.query(query, [nik]);
     connection.release();
     if(rows.length !== 0){
         const auth = bcrypt.compareSync(password, rows[0].password)
         if (auth){
             const payload = {nik: nik}
             const token = jwt.sign(payload, 'a');
-            return res.status(200).json({token});
+            return res.status(200).json({
+                "error" : "false",
+                "message" : "success",
+                "loginResult": {
+                    "nik": rows[0].nik,
+                    "name": rows[0].name,
+                    "email":rows[0].email,
+                    "phone":rows[0].phone,
+                    "lintang":rows[0].lintang,
+                    "bujur":rows[0].bujur,
+                    "token":token
+                }
+            });
         }
         return res.status(400).json({error: 'wrong password'});
     }
