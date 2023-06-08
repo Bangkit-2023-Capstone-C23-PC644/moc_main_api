@@ -224,7 +224,7 @@ const rsRegisterHandler = async (req,res) => {
     // Execute the SQL query asynchronously
     const query = `INSERT INTO hospitals (hospitalID, namaRS, alamat, lintang, bujur, kemampuan_penyelenggaraan, status_akreditasi, jumlah_tempat_tidur_perawatan_umum, jumlah_tempat_tidur_perawatan_persalinan, jml_dokter_umum, jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, password, location ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, POINT(${bujur} ,${lintang}))`;
     const [result] = await connection.query(query, [hospitalID, namaRS, alamat, lintang, bujur, default_kemampuan_penyelenggaraan, default_status_akreditasi, default_jumlah_tempat_tidur_perawatan_umum, default_jumlah_tempat_tidur_perawatan_persalinan, default_jml_dokter_umum, default_jml_dokter_gigi, default_jml_perawat, default_jml_bidan, default_jml_ahli_gizi, hash]);
-
+    const [result2] = await connection.query('INSERT INTO activity (hid, status, pplestimate, timeadded) VALUES (?, 0, 0, NOW())', [hospitalID])
     // Release the connection back to the pool
     connection.release();
 
@@ -242,7 +242,51 @@ const rsRegisterHandler = async (req,res) => {
   }
 }
 
+const rsLoginHandler = async (req,res) => {
+    const { hospitalID, password } = req.body;
 
+    if(!hospitalID || !password) {
+        res.status(400).json({ error: 'Missing required fields' });
+        return;
+    }
+
+    if(hospitalID === ''|| password === '') {
+        res.status(400).json({ error: 'Missing required fields' });
+        return;
+    }
+
+    const connection = await pool.getConnection();
+
+    try{
+    // Execute the SQL query asynchronously
+    const query = `SELECT hospitalID, password FROM hospitals WHERE hospitalID = ?`;
+    const [result] = await connection.query(query, [hospitalID]);
+    // Release the connection back to the pool
+    connection.release();
+
+    // Send the query result as a response
+    if(result.length === 0){
+        res.status(400).json({ error: 'ID tidak terdaftar' });
+        return;
+    }
+    const auth = await bcrypt.compare(password, result[0].password)
+    if(!auth){
+        res.status(400).json({ error: 'Password salah' });
+        return;
+    }
+    const token = jwt.sign({id: result[0].hospitalID}, 'b')
+    res.json({
+      token,
+      message: 'Login berhasil',
+    });
+    }
+
+    catch (error) {
+    // Handle any errors that occur during the process
+    console.error('Error inserting data:', error);
+    res.status(400).send('Invalid credentials');
+  }
+}
 
 const helloHandler = (req,res) => {
     res.status(200).send({
@@ -251,4 +295,4 @@ const helloHandler = (req,res) => {
 }
 
 
-module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler, rsRegisterHandler };
+module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler, rsRegisterHandler,rsLoginHandler };
