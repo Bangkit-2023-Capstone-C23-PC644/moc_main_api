@@ -1,12 +1,13 @@
+require('dotenv').config();
 const { query } = require('express');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 const pool = mysql.createPool({
-    host: '172.27.213.253',
-    user: 'wsl_root',
-    password: 'password',
-    database: 'mocset',
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DATABASE,
     connectionLimit: 10, // Adjust the limit as per your requirements
 });
 
@@ -120,7 +121,7 @@ const loginHandler = async (req,res) =>{
         const auth = bcrypt.compareSync(password, rows[0].password)
         if (auth){
             const payload = {nik: nik}
-            const token = jwt.sign(payload, 'a');
+            const token = jwt.sign(payload, process.env.SECRET_USER);
             return res.status(200).json({
                 "error" : "false",
                 "message" : "success",
@@ -274,7 +275,7 @@ const rsLoginHandler = async (req,res) => {
         res.status(400).json({ error: 'Password salah' });
         return;
     }
-    const token = jwt.sign({id: result[0].hospitalID}, 'b')
+    const token = jwt.sign({id: result[0].hospitalID}, process.env.SECRET_RS)
     res.json({
       token,
       message: 'Login berhasil',

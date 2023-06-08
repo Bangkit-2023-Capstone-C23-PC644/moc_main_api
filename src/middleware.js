@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-
+require('dotenv').config();
 async function verifyToken(req, res, next) {
     // Extract the JWT token from the request headers
     const token = req.headers.authorization;
@@ -11,7 +11,7 @@ async function verifyToken(req, res, next) {
   
     try {
       // Verify and decode the JWT token
-      const decoded = await jwt.verify(token, 'a');
+      const decoded = await jwt.verify(token, process.env.SECRET_USER);
   
       // Extract the user ID from the decoded token
       const nik = decoded.nik;
@@ -39,7 +39,7 @@ async function verifyTokenRS(req, res, next) {
     
       try {
         // Verify and decode the JWT token
-        const decoded = await jwt.verify(token, 'b');
+        const decoded = await jwt.verify(token, process.env.SECRET_RS);
     
         // Extract the user ID from the decoded token
         const hospitalID = decoded.hospitalID;

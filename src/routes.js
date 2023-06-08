@@ -12,5 +12,5 @@ routes.post('/login', loginHandler)
 routes.post('/shortest', getShortestHandler)
 routes.get('/nearest', verifyToken, getNearestTokenHandler)
 routes.post('/rsregister', rsRegisterHandler)
-routes.post('/rslogin', verifyTokenRS ,rsLoginHandler)
+routes.post('/rslogin', rsLoginHandler)
 module.exports = routes;
