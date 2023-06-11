@@ -38,7 +38,7 @@ const getHospitalSpecificHandler = async (req,res) => {
         // Get a connection from the pool
         const connection = await pool.getConnection();
         
-        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_umum, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalID = s.hid WHERE h.hospitalID = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalID = ?)";
+        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_umum, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, h.jml_perawat, h.jml_bidan, h.jml_ahli_gizi, s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalID = s.hid WHERE h.hospitalID = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalID = ?)";
         // Execute the SQL query asynchronously
         const [rows, fields] = await connection.query(query, [id, id]);
     
@@ -177,7 +177,11 @@ const getNearestTokenHandler = async(req,res) =>{
         connection.release();
     
         // Send the query result as a response
-        res.json(rows);
+        res.json({
+            "error": "false",
+            "message":"success",
+            "result": rows
+        });
       } catch (error) {
         // Handle any errors that occur during the process
         console.error('Error executing SQL query:', error);
