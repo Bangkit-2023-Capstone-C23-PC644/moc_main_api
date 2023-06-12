@@ -175,7 +175,7 @@ const getNearestTokenHandler = async(req,res) =>{
         const connection = await pool.getConnection();
     
         // Execute the SQL query asynchronously
-        const query = 'SELECT t1.hospitalID, t1.namaRS, ST_Distance_Sphere(t1.location, POINT(t2.bujur, t2.lintang)) AS distance FROM hospitals t1 JOIN users t2 ON t2.nik = ? ORDER BY distance;'
+        const query = 'SELECT t1.hospitalID, t1.namaRS, t1.lintang, t1.bujur, ST_Distance_Sphere(t1.location, POINT(t2.bujur, t2.lintang)) AS distance FROM hospitals t1 JOIN users t2 ON t2.nik = ? ORDER BY distance;'
         const [rows, fields] = await connection.query(query, [nik]);
     
         // Release the connection back to the pool
