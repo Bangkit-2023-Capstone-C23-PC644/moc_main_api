@@ -39,7 +39,7 @@ const getHospitalSpecificHandler = async (req,res) => {
         // Get a connection from the pool
         const connection = await pool.getConnection();
         
-        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_umum, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, h.jml_perawat, h.jml_bidan, h.jml_ahli_gizi, s.status, s.pplestimate, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalID = s.hid WHERE h.hospitalID = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalID = ?)";
+        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_umum, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, h.jml_perawat, h.jml_bidan, h.jml_ahli_gizi, s.status, s.pplestimate, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalID = s.hid WHERE h.hospitalID = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hid = ?)";
         // Execute the SQL query asynchronously
         const [rows, fields] = await connection.query(query, [id, id]);
     
