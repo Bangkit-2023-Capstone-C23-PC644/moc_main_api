@@ -43,10 +43,10 @@ async function verifyTokenRS(req, res, next) {
     
         // Extract the user ID from the decoded token
         const hospitalID = decoded.hospitalID;
+        
     
         // Attach the user ID to the request object for future use
         req.hospitalID = hospitalID;
-    
         // Proceed to the next middleware or the actual handler
         return next();
       } catch (error) {

@@ -3,6 +3,7 @@ const { query } = require('express');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -38,7 +39,7 @@ const getHospitalSpecificHandler = async (req,res) => {
         // Get a connection from the pool
         const connection = await pool.getConnection();
         
-        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_umum, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, h.jml_perawat, h.jml_bidan, h.jml_ahli_gizi, s.status, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalID = s.hid WHERE h.hospitalID = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalID = ?)";
+        const query = "SELECT h.namaRS, h.alamat, h.kemampuan_penyelenggaraan, h.status_akreditasi, h.jumlah_tempat_tidur_perawatan_umum, h.jumlah_tempat_tidur_perawatan_persalinan, h.jml_dokter_umum, h.jml_dokter_gigi, h.jml_perawat, h.jml_bidan, h.jml_ahli_gizi, s.status, s.pplestimate, s.timeadded FROM hospitals h JOIN activity s ON h.hospitalID = s.hid WHERE h.hospitalID = ? AND s.timeadded = (SELECT MAX(timeadded) FROM activity WHERE hospitalID = ?)";
         // Execute the SQL query asynchronously
         const [rows, fields] = await connection.query(query, [id, id]);
     
@@ -49,7 +50,7 @@ const getHospitalSpecificHandler = async (req,res) => {
         res.json({
             "error":"false",
             "message":"success",
-            "result": rows
+            "result": rows[0]
         });
       } catch (error) {
         // Handle any errors that occur during the process
@@ -283,7 +284,7 @@ const rsLoginHandler = async (req,res) => {
         res.status(400).json({ error: 'Password salah' });
         return;
     }
-    const token = jwt.sign({id: result[0].hospitalID}, process.env.SECRET_RS)
+    const token = jwt.sign({hospitalID: result[0].hospitalID}, process.env.SECRET_RS)
     res.json({
       token,
       message: 'Login berhasil',
@@ -297,6 +298,54 @@ const rsLoginHandler = async (req,res) => {
   }
 }
 
+const mlhandler = async (req, res)=>{
+    const hospitalID = req.hospitalID
+    const connection = await pool.getConnection();
+    try {
+        // Get the image file from the request
+        
+        const imageFile = req.file;
+
+        const blob = new Blob([imageFile.buffer], { type: imageFile.mimetype });
+
+    
+        // Create a new FormData instance
+        const formData = new FormData();
+        formData.append('file', blob, imageFile.originalname);
+    
+        // Make a request to the other API resource
+        const response = await axios.post(process.env.ML_LINK, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+    
+        // Handle the response from the other API resource
+        // ...
+        const ppl = response.data.estimate
+        let status = 0;
+        if (ppl > 20){
+            status = 3
+        }
+        else if (ppl > 10 && ppl<20 ){
+            status = 2
+        }
+        else {status = 1}
+        const [result2] = await connection.query('INSERT INTO activity (hid, status, pplestimate, timeadded) VALUES (?, ?, ?, NOW())', [hospitalID, status, ppl])
+        // Release the connection back to the pool
+        connection.release();
+        res.status(200).json({
+            "ppl": ppl,
+            "status": status
+        });
+
+
+      } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal server error');
+      }
+}
+
 const helloHandler = (req,res) => {
     res.status(200).send({
         hello: 'okay'
@@ -304,4 +353,4 @@ const helloHandler = (req,res) => {
 }
 
 
-module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler, rsRegisterHandler,rsLoginHandler };
+module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler, rsRegisterHandler,rsLoginHandler, mlhandler };
