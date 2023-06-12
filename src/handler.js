@@ -46,7 +46,11 @@ const getHospitalSpecificHandler = async (req,res) => {
         connection.release();
     
         // Send the query result as a response
-        res.json(rows);
+        res.json({
+            "error":"false",
+            "message":"success",
+            "result": rows
+        });
       } catch (error) {
         // Handle any errors that occur during the process
         console.error('Error executing SQL query:', error);
