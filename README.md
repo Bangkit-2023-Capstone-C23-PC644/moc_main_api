@@ -103,6 +103,9 @@ For registering your hospital so that it can be displayed
 
 #### Login hospital
 For logging in as hospital admin and getting that hospital's JWT token
+
+| Field | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
 | `nik`      | `string` | **Required**. your 7 digit hospital ID |
 | `password`      | `string` | **Required**. your password |
 
