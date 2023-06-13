@@ -13,26 +13,6 @@ const pool = mysql.createPool({
 });
 
 
-const getHospitalHandler = async (req, res) => {
-    try {
-        // Get a connection from the pool
-        const connection = await pool.getConnection();
-    
-        // Execute the SQL query asynchronously
-        const [rows, fields] = await connection.query('SELECT hospitalID, namaRS FROM hospitals');
-    
-        // Release the connection back to the pool
-        connection.release();
-    
-        // Send the query result as a response
-        res.json(rows);
-      } catch (error) {
-        // Handle any errors that occur during the process
-        console.error('Error executing SQL query:', error);
-        res.status(500).send('Internal Server Error');
-      }
-}
-
 const getHospitalSpecificHandler = async (req,res) => {
     const {id} = req.params;
     try {
@@ -144,28 +124,6 @@ const loginHandler = async (req,res) =>{
         return res.status(400).json({error: 'wrong password'});
     }
     res.status(400).json({error:'nik not found'})
-}
-
-const getShortestHandler = async (req,res) => {
-    const {longitude , latitude} = req.body;
-    try {
-        // Get a connection from the pool
-        const connection = await pool.getConnection();
-    
-        // Execute the SQL query asynchronously
-        const query = 'SELECT hospitalID, namaRS, ST_Distance_Sphere(location, POINT(?, ?)) AS distance FROM hospitals ORDER BY distance;'
-        const [rows, fields] = await connection.query(query, [longitude, latitude]);
-    
-        // Release the connection back to the pool
-        connection.release();
-    
-        // Send the query result as a response
-        res.json(rows);
-      } catch (error) {
-        // Handle any errors that occur during the process
-        console.error('Error executing SQL query:', error);
-        res.status(500).send('Internal Server Error');
-      }
 }
 
 const getNearestTokenHandler = async(req,res) =>{
@@ -327,10 +285,11 @@ const mlhandler = async (req, res)=>{
         if (ppl > 20){
             status = 3
         }
-        else if (ppl > 10 && ppl<20 ){
+        else if (ppl >= 8 && ppl <= 20 ){
             status = 2
         }
         else {status = 1}
+        
         const [result2] = await connection.query('INSERT INTO activity (hid, status, pplestimate, timeadded) VALUES (?, ?, ?, NOW())', [hospitalID, status, ppl])
         // Release the connection back to the pool
         connection.release();
@@ -346,11 +305,6 @@ const mlhandler = async (req, res)=>{
       }
 }
 
-const helloHandler = (req,res) => {
-    res.status(200).send({
-        hello: 'okay'
-    })
-}
 
 
-module.exports= { helloHandler, getHospitalHandler, registerHandler, loginHandler, getShortestHandler, getNearestTokenHandler, getHospitalSpecificHandler, rsRegisterHandler,rsLoginHandler, mlhandler };
+module.exports= { registerHandler, loginHandler, getNearestTokenHandler, getHospitalSpecificHandler, rsRegisterHandler,rsLoginHandler, mlhandler };

@@ -20,6 +20,15 @@ To deploy this project you can clone this project through GCP's cloud shell, and
   gcloud app deploy
 ```
 Make sure to change the .env files accordingly beforehand!
+| ENV Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `DB_HOST`      | `string` | **Required**. your database IP address |
+| `DB_USER`      | `string` | **Required**. your username |
+| `DB_PASS`      | `string` | **Required**. your password |
+| `SECRET_USER`      | `string` | **Required**. your secret key for signing the user's JWT token |
+| `SECRET_RS`      | `string` | **Required**. your secret key for signing the hospital's JWT token |
+| `PORT`      | `string` | **Required**. your prefered port for running the API |
+| `ML_LINK`      | `string` | **Required**. HTTP link to the your deployed Machine learning model API |
 
 For the database we're using mysql, so you can create a mysql instance using GCP's SQL, or host your own. After you've created your instance you can import our database schema (mocset1.sql) using a GUI like mysql workbench, phpmyadmin, heidisql, or you can also do a query in your mysql client using
 ```
@@ -36,7 +45,7 @@ For registering user
   POST /register
 ```
 
-| Parameter | Type     | Description                |
+| Field | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `NIK` | `string` | **Required**. Your 16-digit NIK |
 |`name`|`string`|**Required**. Your first and last name|
@@ -52,7 +61,7 @@ For logging in as a user and getting that user's JWT token
   POST /login
 ```
 
-| Parameter | Type     | Description                       |
+| Field | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
 | `nik`      | `string` | **Required**. your 16-digit nik |
 | `password`      | `string` | **Required**. your password |
@@ -63,18 +72,8 @@ For getting all hospital's brief info and sorting it by user's distance **Requir
   GET /nearest 
 ```
 
-#### Shortest hospitals
-Get all hospital's brief info and sorting them by specified distance
-```http
-  POST /shortest
-```
-| Parameter | Type     | Description                |
-| :-------- | :------- | :------------------------- |
-|`latitude`|`string`|**Required**. Your coordinate's latitude according to google maps|
-|`longitude`|`string`|**Required**. Your coordinate's longitude according to google maps|
-
 #### Getting hospitals details
-For getting hospital's detailed information including the hospital's crowdness and estimated queue
+For getting hospital's detailed information including the hospital's crowdness and estimated queue **Requires user's JWT token**
 ```http
     GET /hospitals/{hospitalID}
 ```
@@ -101,3 +100,17 @@ For registering your hospital so that it can be displayed
 | jml_bidan                        | String | Number of midwives                                |
 | jml_ahli_gizi                    | String | Number of dietitians/nutritionists                |
 | password                         | String | **Required**. Your password. It must be 6 characters or more |
+
+#### Login hospital
+For logging in as hospital admin and getting that hospital's JWT token
+| `nik`      | `string` | **Required**. your 7 digit hospital ID |
+| `password`      | `string` | **Required**. your password |
+
+#### Machine Learning model
+For loading your images to our ML model and then update the database accordingly **Requires hospital's JWT token**
+```http
+    POST /ml/
+```
+| Field | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `file`      | `JPEG/PNG image` | **Required**. your image that needs to be processed through our ML Model |
