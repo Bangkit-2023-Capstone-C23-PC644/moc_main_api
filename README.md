@@ -1,7 +1,7 @@
 
 # Medical Overseer Control (MOC) API
 
-MOC is a cloud native android app that can monitor hospital's estimated queue, crowdness, or activity. It uses cutting edge machine learning model to automatically detect hospital's activity through a CCTV camera. The MOC API are hosted on the Google Cloud Platform, making it secure, highly-available, and scalable.
+MOC is a cloud native android app that can monitor hospital's estimated queue, crowdness, or activity. It uses cutting edge machine learning model to automatically detect hospital's activity through a CCTV camera. The MOC API is powered by express.js framework and mysql database which is both reliable and easy to develop. This API are hosted on the Google Cloud Platform, making it secure, highly-available, and scalable. 
 
 
 
@@ -103,6 +103,9 @@ For registering your hospital so that it can be displayed
 
 #### Login hospital
 For logging in as hospital admin and getting that hospital's JWT token
+```http
+    POST /rslogin/
+```
 
 | Field | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
