@@ -165,12 +165,12 @@ const rsRegisterHandler = async (req,res) => {
     const default_jml_bidan = jml_bidan || 0;
     const default_jml_ahli_gizi = jml_ahli_gizi || 0;
 
-    if(!hospitalID || !namaRS || !alamat || !lintang || !bujur) {
+    if(!hospitalID || !namaRS || !alamat || !lintang || !bujur|| !password) {
         console.log(`${hospitalID}, ${namaRS}, ${alamat}, ${lintang}, ${bujur}`);
         res.status(400).json({ error: 'Missing required fields1' });
         return;
     }
-    if(hospitalID === ''|| namaRS === '' || alamat === '' || lintang === '' || bujur === '') {
+    if(hospitalID === ''|| namaRS === '' || alamat === '' || lintang === '' || bujur === '' || password === '') {
         res.status(400).json({ error: 'Missing required fields2' });
         return;
     }
