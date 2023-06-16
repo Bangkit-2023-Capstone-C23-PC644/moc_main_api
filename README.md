@@ -47,7 +47,7 @@ For registering user
 
 | Field | Type     | Description                |
 | :-------- | :------- | :------------------------- |
-| `NIK` | `string` | **Required**. Your 16-digit NIK |
+| `nik` | `string` | **Required**. Your 16-digit NIK |
 |`name`|`string`|**Required**. Your first and last name|
 |`email`|`string`|**Required**. Your email account|
 |`phone`|`string`|**Required**. Your phone number|
