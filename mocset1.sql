@@ -1,5 +1,5 @@
 -- --------------------------------------------------------
--- Host:                         34.101.110.18
+-- Host:                         34.101.128.251
 -- Server version:               8.0.26-google - (Google)
 -- Server OS:                    Linux
 -- HeidiSQL Version:             12.5.0.6677
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `activity` (
   PRIMARY KEY (`activityid`),
   KEY `FK_activity_hospitals` (`hid`),
   CONSTRAINT `FK_activity_hospitals` FOREIGN KEY (`hid`) REFERENCES `hospitals` (`hospitalID`)
-) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS `hospitals` (
   `jml_ahli_gizi` int NOT NULL,
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `location` point NOT NULL,
+  `quota_ruang_tunggu` int NOT NULL,
   PRIMARY KEY (`hospitalID`) USING BTREE,
   UNIQUE KEY `namaRS` (`namaRS`),
   UNIQUE KEY `kode_puskesmas` (`hospitalID`) USING BTREE
