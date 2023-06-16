@@ -52,8 +52,8 @@ For registering user
 |`email`|`string`|**Required**. Your email account|
 |`phone`|`string`|**Required**. Your phone number|
 |`password`|`string`|**Required**. Your Password. must be at least 6 characters|
-|`lintang`|`string`|**Required**. Your location's latitude according to google maps|
-|`bujur`|`string`|**Required**. your location's latitude according to google maps|
+|`lintang`|`string`|**Required**. Your location's latitude according to google maps (e.g -6.326645)|
+|`bujur`|`string`|**Required**. your location's latitude according to google maps (e.g 106.861029)|
 
 #### Login User
 For logging in as a user and getting that user's JWT token
