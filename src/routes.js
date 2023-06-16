@@ -3,7 +3,16 @@ const{ registerHandler, loginHandler, getNearestTokenHandler, getHospitalSpecifi
 const {verifyToken, verifyTokenRS} = require('./middleware')
 const multer = require('multer'); 
 const routes = express.Router();
-const upload = multer();
+
+const fileFilter = function (req, file, cb) {
+    // Check if the file is an image
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true); // Accept the file
+    } else {
+      cb(new Error('File type not supported'), false); // Reject the file
+    }
+  };
+const upload = multer({fileFilter: fileFilter});
 
 
 routes.get('/hospitals/:id', verifyToken, getHospitalSpecificHandler)
