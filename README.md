@@ -100,6 +100,7 @@ For registering your hospital so that it can be displayed
 | jml_bidan                        | String | Number of midwives                                |
 | jml_ahli_gizi                    | String | Number of dietitians/nutritionists                |
 | password                         | String | **Required**. Your password. It must be 6 characters or more |
+| quota_ruang_tunggu                         | String | **Required**. Your waiting room estimated maximum number of people before it become very crowded |
 
 #### Login hospital
 For logging in as hospital admin and getting that hospital's JWT token

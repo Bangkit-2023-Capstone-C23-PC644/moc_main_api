@@ -153,7 +153,7 @@ const getNearestTokenHandler = async(req,res) =>{
 }
 
 const rsRegisterHandler = async (req,res) => {
-    const { hospitalID, namaRS, alamat, lintang, bujur, kemampuan_penyelenggaraan, status_akreditasi, jumlah_tempat_tidur_perawatan_umum, jumlah_tempat_tidur_perawatan_persalinan, jml_dokter_umum, jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, password } = req.body;
+    const { hospitalID, namaRS, alamat, lintang, bujur, kemampuan_penyelenggaraan, status_akreditasi, jumlah_tempat_tidur_perawatan_umum, jumlah_tempat_tidur_perawatan_persalinan, jml_dokter_umum, jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, password, quota_ruang_tunggu } = req.body;
 
     const default_kemampuan_penyelenggaraan = kemampuan_penyelenggaraan || 0;
     const default_status_akreditasi = status_akreditasi || 0;
@@ -165,13 +165,12 @@ const rsRegisterHandler = async (req,res) => {
     const default_jml_bidan = jml_bidan || 0;
     const default_jml_ahli_gizi = jml_ahli_gizi || 0;
 
-    if(!hospitalID || !namaRS || !alamat || !lintang || !bujur|| !password) {
-        console.log(`${hospitalID}, ${namaRS}, ${alamat}, ${lintang}, ${bujur}`);
-        res.status(400).json({ error: 'Missing required fields1' });
+    if(!hospitalID || !namaRS || !alamat || !lintang || !bujur|| !password || !quota_ruang_tunggu) {
+        res.status(400).json({ error: 'Missing required fields' });
         return;
     }
-    if(hospitalID === ''|| namaRS === '' || alamat === '' || lintang === '' || bujur === '' || password === '') {
-        res.status(400).json({ error: 'Missing required fields2' });
+    if(hospitalID === ''|| namaRS === '' || alamat === '' || lintang === '' || bujur === '' || password === '' || quota_ruang_tunggu === '') {
+        res.status(400).json({ error: 'Missing required fields' });
         return;
     }
 
@@ -190,8 +189,8 @@ const rsRegisterHandler = async (req,res) => {
 
     try{
     // Execute the SQL query asynchronously
-    const query = `INSERT INTO hospitals (hospitalID, namaRS, alamat, lintang, bujur, kemampuan_penyelenggaraan, status_akreditasi, jumlah_tempat_tidur_perawatan_umum, jumlah_tempat_tidur_perawatan_persalinan, jml_dokter_umum, jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, password, location ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, POINT(${bujur} ,${lintang}))`;
-    const [result] = await connection.query(query, [hospitalID, namaRS, alamat, lintang, bujur, default_kemampuan_penyelenggaraan, default_status_akreditasi, default_jumlah_tempat_tidur_perawatan_umum, default_jumlah_tempat_tidur_perawatan_persalinan, default_jml_dokter_umum, default_jml_dokter_gigi, default_jml_perawat, default_jml_bidan, default_jml_ahli_gizi, hash]);
+    const query = `INSERT INTO hospitals (hospitalID, namaRS, alamat, lintang, bujur, kemampuan_penyelenggaraan, status_akreditasi, jumlah_tempat_tidur_perawatan_umum, jumlah_tempat_tidur_perawatan_persalinan, jml_dokter_umum, jml_dokter_gigi, jml_perawat, jml_bidan, jml_ahli_gizi, password, quota_ruang_tunggu, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, POINT(${bujur} ,${lintang}))`;
+    const [result] = await connection.query(query, [hospitalID, namaRS, alamat, lintang, bujur, default_kemampuan_penyelenggaraan, default_status_akreditasi, default_jumlah_tempat_tidur_perawatan_umum, default_jumlah_tempat_tidur_perawatan_persalinan, default_jml_dokter_umum, default_jml_dokter_gigi, default_jml_perawat, default_jml_bidan, default_jml_ahli_gizi, hash, quota_ruang_tunggu]);
     const [result2] = await connection.query('INSERT INTO activity (hid, status, pplestimate, timeadded) VALUES (?, 0, 0, NOW())', [hospitalID])
     // Release the connection back to the pool
     connection.release();
@@ -234,18 +233,18 @@ const rsLoginHandler = async (req,res) => {
 
     // Send the query result as a response
     if(result.length === 0){
-        res.status(400).json({ error: 'ID tidak terdaftar' });
+        res.status(400).json({ error: 'ID is not registered' });
         return;
     }
     const auth = await bcrypt.compare(password, result[0].password)
     if(!auth){
-        res.status(400).json({ error: 'Password salah' });
+        res.status(400).json({ error: 'Wrong password' });
         return;
     }
     const token = jwt.sign({hospitalID: result[0].hospitalID}, process.env.SECRET_RS)
     res.json({
       token,
-      message: 'Login berhasil',
+      message: 'Login Successful',
     });
     }
 
@@ -280,12 +279,14 @@ const mlhandler = async (req, res)=>{
     
         // Handle the response from the other API resource
         // ...
+
         const ppl = response.data.estimate
+        const [result3] = await connection.query("SELECT quota_ruang_tunggu FROM hospitals WHERE hospitalID=?", [hospitalID])
         let status = 0;
-        if (ppl > 20){
+        if (ppl >= result3[0].quota_ruang_tunggu){
             status = 3
         }
-        else if (ppl >= 8 && ppl <= 20 ){
+        else if (ppl > (result3[0].quota_ruang_tunggu * 0.75) && ppl < result3[0].quota_ruang_tunggu ){
             status = 2
         }
         else {status = 1}
